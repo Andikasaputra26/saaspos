@@ -20,13 +20,13 @@
       </tr>
     </thead>
     <tbody>
-      @foreach($sale->items as $item)
-        <tr>
-          <td>{{ $item->product->product->name ?? '-' }}</td>
-          <td class="text-center">{{ $item->quantity }}</td>
-          <td class="text-end">Rp {{ number_format($item->price, 0, ',', '.') }}</td>
-          <td class="text-end">Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
-        </tr>
+      @foreach ($sale->items as $item)
+          <tr>
+              <td>{{ $item->storeProduct->product->name ?? '-' }}</td>
+              <td>{{ $item->quantity }}</td>
+              <td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>
+              <td>Rp {{ number_format($item->subtotal, 0, ',', '.') }}</td>
+          </tr>
       @endforeach
     </tbody>
   </table>

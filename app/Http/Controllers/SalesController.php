@@ -12,26 +12,34 @@ use Illuminate\Support\Facades\DB;
 
 class SalesController extends Controller
 {
+    /**
+     * Menampilkan halaman transaksi (daftar produk aktif)
+     */
     public function index()
     {
         $user = Auth::user();
         $storeId = session('store_id');
 
-        $storeIds = [];
+        // Ambil toko yang dimiliki user owner atau yang sedang aktif
         if ($user->role === 'owner') {
             $storeIds = Store::where('user_id', $user->id)->pluck('id');
         } else {
             $storeIds = [$storeId];
         }
 
+        // 🔥 Ambil hanya produk aktif yang bisa dijual
         $products = StoreProduct::with('product')
             ->whereIn('store_id', $storeIds)
-            ->orderBy('id', 'desc')
+            ->where('is_active', true) // ✅ hanya produk aktif
+            ->orderByDesc('id')
             ->get();
 
         return view('sales.index', compact('products'));
     }
 
+    /**
+     * Simpan transaksi penjualan baru
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -47,6 +55,24 @@ class SalesController extends Controller
         try {
             $invoiceNumber = 'INV-' . now()->format('Ymd') . '-' . str_pad(Sales::count() + 1, 4, '0', STR_PAD_LEFT);
 
+            // 🔎 Cek apakah semua produk masih aktif dan stok cukup
+            foreach ($request->cart as $item) {
+                $storeProduct = StoreProduct::find($item['id']);
+
+                if (!$storeProduct) {
+                    throw new \Exception("Produk dengan ID {$item['id']} tidak ditemukan.");
+                }
+
+                if (!$storeProduct->is_active) {
+                    throw new \Exception("Produk {$storeProduct->product->name} sudah nonaktif dan tidak dapat dijual.");
+                }
+
+                if ($storeProduct->stock < $item['qty']) {
+                    throw new \Exception("Stok produk {$storeProduct->product->name} tidak mencukupi (tersisa {$storeProduct->stock}).");
+                }
+            }
+
+            // 🔥 Simpan data penjualan utama
             $sale = Sales::create([
                 'store_id' => $storeId,
                 'user_id' => $userId,
@@ -55,16 +81,20 @@ class SalesController extends Controller
                 'payment_method' => $request->payment_method,
             ]);
 
+            // Simpan item transaksi
             foreach ($request->cart as $item) {
+                $storeProduct = StoreProduct::find($item['id']);
+
                 SalesItems::create([
                     'sale_id' => $sale->id,
-                    'store_product_id' => $item['id'],
+                    'store_product_id' => $storeProduct->id,
                     'quantity' => $item['qty'],
                     'price' => $item['price'],
                     'subtotal' => $item['price'] * $item['qty'],
                 ]);
 
-                StoreProduct::where('id', $item['id'])->decrement('stock', $item['qty']);
+                // Kurangi stok produk
+                $storeProduct->decrement('stock', $item['qty']);
             }
 
             DB::commit();
@@ -73,22 +103,33 @@ class SalesController extends Controller
                 'status' => 'success',
                 'redirect_url' => route('sales.invoice', $sale->id)
             ]);
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['status' => 'error', 'message' => $e->getMessage()]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Transaksi gagal: ' . $e->getMessage(),
+            ]);
         }
     }
 
+    /**
+     * Menampilkan halaman nota/invoice penjualan
+     */
     public function invoice($id)
     {
         $sale = Sales::with([
-            'items.product.product', // SalesItems → StoreProduct → Products
+            'items.storeProduct.product',
             'store',
             'user'
         ])->findOrFail($id);
+
         return view('sales.invoice', compact('sale'));
     }
 
+    /**
+     * Menampilkan riwayat penjualan hari ini
+     */
     public function history()
     {
         $storeId = session('store_id');

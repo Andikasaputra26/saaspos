@@ -14,6 +14,7 @@ class StoreProduct extends Model
         'product_id',
         'price',
         'stock',
+        'is_active',
     ];
 
     

@@ -64,6 +64,14 @@
               @enderror
             </div>
 
+            <div class="mb-3">
+              <label for="is_active" class="form-label">Status Produk</label>
+              <select name="is_active" id="is_active" class="form-select">
+                <option value="1" {{ $storeProduct->is_active ? 'selected' : '' }}>Aktif</option>
+                <option value="0" {{ !$storeProduct->is_active ? 'selected' : '' }}>Nonaktif</option>
+              </select>
+            </div>
+
             {{-- Stok --}}
             <div class="mb-3">
               <label for="stock" class="form-label fw-semibold">Stok</label>

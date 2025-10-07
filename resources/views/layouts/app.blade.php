@@ -1,134 +1,91 @@
 <!DOCTYPE html>
-<html lang="id" data-bs-theme="light">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="id" lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'SaaS POS' }}</title>
+    <!-- Basic Page Needs -->
+    <meta charset="utf-8">
+    <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+    <title>{{ $title ?? 'SaaS POS - Dashboard' }}</title>
+    
+    <meta name="author" content="{{ config('app.name') }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    {{-- Bootstrap & Icons --}}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Theme Style -->
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/animate.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/animation.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/bootstrap.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/bootstrap-select.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
 
-    {{-- Custom Style --}}
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            overflow-x: hidden;
-            background-color: var(--bs-body-bg);
-        }
+    <!-- Font -->
+    <link rel="stylesheet" href="{{ asset('font/fonts.css') }}">
 
-        /* Sidebar */
-        .sidebar {
-            width: 250px;
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background: var(--bs-body-bg);
-            border-right: 1px solid var(--bs-border-color);
-            transition: all 0.3s ease;
-        }
-        .sidebar.collapsed {
-            width: 75px;
-        }
-        .sidebar .nav-link {
-            color: var(--bs-body-color);
-            border-radius: 10px;
-            margin: 4px 0;
-        }
-        .sidebar .nav-link.active {
-            background-color: var(--bs-primary-bg-subtle);
-            color: var(--bs-primary);
-            font-weight: 600;
-        }
-        .sidebar .nav-link:hover {
-            background-color: var(--bs-secondary-bg);
-            color: var(--bs-primary);
-        }
-        .sidebar.collapsed .nav-link span {
-            display: none;
-        }
-        .sidebar.collapsed .nav-link i {
-            margin-right: 0;
-            text-align: center;
-            width: 100%;
-        }
-        .sidebar-logo {
-            font-weight: 700;
-            font-size: 1.2rem;
-            color: var(--bs-primary);
-        }
+    <!-- Icon -->
+    <link rel="stylesheet" href="{{ asset('icon/style.css') }}">
 
-        /* Main Content */
-        .main-content {
-            margin-left: 250px;
-            transition: margin-left 0.3s ease;
-            padding: 20px;
-        }
-        .sidebar.collapsed ~ .main-content {
-            margin-left: 75px;
-        }
-
-        /* Navbar */
-        .navbar {
-            background-color: var(--bs-body-bg);
-            border-bottom: 1px solid var(--bs-border-color);
-            position: sticky;
-            top: 0;
-            z-index: 999;
-        }
-    </style>
+    <!-- Favicon and Touch Icons -->
+    <link rel="shortcut icon" href="{{ asset('images/favicon.png') }}">
+    <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.png') }}">
 
     @stack('head')
 </head>
-<body>
-    {{-- Sidebar --}}
-    @include('layouts.sidebar')
 
-    {{-- Main Content --}}
-    <div class="main-content">
-        {{-- Navbar --}}
-        @include('layouts.navbar')
+<body class="body">
+    <!-- #wrapper -->
+    <div id="wrapper">
+        <!-- #page -->
+        <div id="page" class="">
+            <!-- layout-wrap -->
+            <div class="layout-wrap">
+                <!-- preload -->
+                <div id="preload" class="preload-container">
+                    <div class="preloading">
+                        <span></span>
+                    </div>
+                </div>
+                <!-- /preload -->
 
-        {{-- Page Content --}}
-        <main>
-            @yield('content')
-        </main>
+                <!-- Sidebar -->
+                @include('layouts.sidebar')
+
+                <!-- section-content-right -->
+                <div class="section-content-right">
+                    <!-- Navbar -->
+                    @include('layouts.navbar')
+
+                    <!-- main-content -->
+                    <div class="main-content">
+                        <!-- main-content-wrap -->
+                        <div class="main-content-inner">
+                            @yield('content')
+                        </div>
+                        <!-- /main-content-wrap -->
+
+                        <!-- bottom-page -->
+                        <div class="bottom-page">
+                            <div class="body-text">Copyright © {{ date('Y') }} {{ config('app.name') }}. Design with</div>
+                            <i class="icon-heart"></i>
+                            <div class="body-text">by <a href="#">Your Company</a> All rights reserved.</div>
+                        </div>
+                        <!-- /bottom-page -->
+                    </div>
+                    <!-- /main-content -->
+                </div>
+                <!-- /section-content-right -->
+            </div>
+            <!-- /layout-wrap -->
+        </div>
+        <!-- /#page -->
     </div>
+    <!-- /#wrapper -->
 
-    {{-- Bootstrap JS --}}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    {{-- Sidebar & Dark Mode Script --}}
-    <script>
-        const sidebar = document.getElementById('sidebar');
-        const collapseBtn = document.getElementById('collapseBtn');
-        const toggleSidebar = document.getElementById('toggleSidebar');
-
-        // Toggle Sidebar
-        collapseBtn?.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-        toggleSidebar?.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
-
-        // Dark Mode
-        const darkToggle = document.getElementById('darkModeToggle');
-        const html = document.documentElement;
-        const savedTheme = localStorage.getItem('theme');
-
-        if (savedTheme === 'dark') {
-            html.setAttribute('data-bs-theme', 'dark');
-            if (darkToggle) darkToggle.checked = true;
-        }
-
-        darkToggle?.addEventListener('change', () => {
-            if (darkToggle.checked) {
-                html.setAttribute('data-bs-theme', 'dark');
-                localStorage.setItem('theme', 'dark');
-            } else {
-                html.setAttribute('data-bs-theme', 'light');
-                localStorage.setItem('theme', 'light');
-            }
-        });
-    </script>
+    <!-- Javascript -->
+    <script src="{{ asset('js/jquery.min.js') }}"></script>
+    <script src="{{ asset('js/bootstrap.min.js') }}"></script>
+    <script src="{{ asset('js/bootstrap-select.min.js') }}"></script>
+    <script src="{{ asset('js/zoom.js') }}"></script>
+    <script src="{{ asset('js/theme-settings.js') }}"></script>
+    <script src="{{ asset('js/main.js') }}"></script>
 
     @stack('scripts')
 </body>

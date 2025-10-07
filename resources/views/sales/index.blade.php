@@ -5,7 +5,6 @@
 <div class="container-fluid py-3">
   <div class="row">
 
-    {{-- === KOLOM PRODUK === --}}
     <div class="col-lg-8 mb-4 mb-lg-0">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0"><i class="bi bi-box-seam me-2"></i>Produk Toko</h5>
@@ -23,12 +22,25 @@
         <div class="row g-3">
           @foreach($products as $p)
             <div class="col-6 col-md-4 col-lg-3">
-              <div class="card h-100 border-0 shadow-sm product-card"
-                onclick="addToCart({{ $p->id }}, '{{ addslashes($p->product->name) }}', {{ $p->price }}, {{ $p->stock }})">
-                
+              <div class="card h-100 border-0 shadow-sm product-card position-relative
+                {{ !$p->is_active ? 'disabled' : '' }}"
+                @if($p->is_active && $p->stock > 0)
+                  onclick="addToCart({{ $p->id }}, '{{ addslashes($p->product->name) }}', {{ $p->price }}, {{ $p->stock }})"
+                @endif>
+
                 <img src="{{ $p->product->image ? asset('storage/'.$p->product->image) : asset('assets/img/no-image.png') }}"
                   class="card-img-top rounded-top" style="height:120px; object-fit:cover;">
-                
+
+                @if(!$p->is_active)
+                  <div class="overlay bg-dark bg-opacity-50 position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-top">
+                    <span class="badge bg-danger text-white px-3 py-2">Nonaktif</span>
+                  </div>
+                @elseif($p->stock <= 0)
+                  <div class="overlay bg-dark bg-opacity-50 position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center rounded-top">
+                    <span class="badge bg-warning text-dark px-3 py-2">Stok Habis</span>
+                  </div>
+                @endif
+
                 <div class="card-body text-center p-2">
                   <h6 class="fw-semibold mb-1 text-truncate">{{ $p->product->name }}</h6>
                   <small class="text-muted d-block mb-1">Rp {{ number_format($p->price, 0, ',', '.') }}</small>
@@ -100,18 +112,19 @@
   </div>
 </div>
 
+{{-- === SCRIPT JS === --}}
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
   let cart = [];
   const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
   const storeUrl = @json(route('sales.store'));
 
   function addToCart(id, name, price, stock) {
+    if (stock <= 0) return alert('❌ Stok produk ini sudah habis!');
     const existing = cart.find(p => p.id === id);
     if (existing) {
       if (existing.qty < stock) existing.qty++;
-      else return alert('Stok tidak cukup!');
+      else return alert('❌ Stok tidak cukup!');
     } else {
       cart.push({ id, name, price, qty: 1 });
     }
@@ -182,6 +195,7 @@
       }
 
       btn.disabled = true;
+      const originalText = btn.innerHTML;
       btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Proses...`;
 
       try {
@@ -199,13 +213,13 @@
         if (data.status === 'success') {
           window.location.href = data.redirect_url;
         } else {
-          alert('Gagal: ' + (data.message ?? 'Terjadi kesalahan.'));
+          alert('❌ ' + (data.message ?? 'Terjadi kesalahan.'));
         }
       } catch (e) {
-        alert('Kesalahan koneksi ke server.');
+        alert('⚠️ Kesalahan koneksi ke server.');
       } finally {
         btn.disabled = false;
-        btn.innerHTML = btn.dataset.method.toUpperCase();
+        btn.innerHTML = originalText;
       }
     });
   });
@@ -214,7 +228,9 @@
 <style>
   .product-card { transition: all .2s ease; cursor: pointer; }
   .product-card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.15); }
+  .product-card.disabled { opacity: 0.5; pointer-events: none; }
   .payment-option { transition: .2s ease; }
   .payment-option:hover { transform: scale(1.05); box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+  .overlay { border-radius: .5rem .5rem 0 0; }
 </style>
 @endsection
