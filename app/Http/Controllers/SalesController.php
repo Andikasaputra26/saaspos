@@ -130,18 +130,73 @@ class SalesController extends Controller
     /**
      * Menampilkan riwayat penjualan hari ini
      */
-    public function history()
+    public function history(Request $request)
     {
         $storeId = session('store_id');
+        $date = $request->input('date', now()->toDateString());
+        $search = $request->input('search');
 
-        $sales = Sales::with('user')
+        $query = \App\Models\Sales::with('user')
             ->where('store_id', $storeId)
-            ->whereDate('created_at', now()->toDateString())
-            ->orderByDesc('created_at')
-            ->get();
+            ->whereDate('created_at', $date)
+            ->orderByDesc('created_at');
 
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('invoice_number', 'like', "%{$search}%")
+                ->orWhereHas('user', function ($qu) use ($search) {
+                    $qu->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('payment_method', 'like', "%{$search}%");
+            });
+        }
+
+        $sales = $query->get();
         $totalHariIni = $sales->sum('total');
 
+        // --- Jika request AJAX, kirim JSON ---
+        if ($request->ajax()) {
+            $data = $sales->map(function ($s, $i) {
+                return [
+                    'id' => $s->id,
+                    'no' => $i + 1,
+                    'invoice_number' => $s->invoice_number,
+                    'kasir' => $s->user->name ?? '-',
+                    'tanggal' => $s->created_at->format('d M Y, H:i'),
+                    'metode' => ucfirst($s->payment_method),
+                    'total' => 'Rp ' . number_format($s->total, 0, ',', '.'),
+                    'link' => route('sales.invoice', $s->id),
+                ];
+            });
+
+            return response()->json([
+                'sales' => $data,
+                'totalHariIni' => 'Rp ' . number_format($totalHariIni, 0, ',', '.'),
+            ]);
+        }
+
+        // --- Jika bukan AJAX, render Blade biasa ---
         return view('sales.history', compact('sales', 'totalHariIni'));
     }
+
+    public function destroy($id)
+    {
+        try {
+            $sale = \App\Models\Sales::with('items')->findOrFail($id);
+
+            foreach ($sale->items as $item) {
+                $item->delete();
+            }
+
+            $sale->delete();
+
+            return response()->json(['message' => 'Transaksi berhasil dihapus.']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Gagal menghapus transaksi: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+
 }

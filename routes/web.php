@@ -43,11 +43,13 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/products/{id}/activate', [ProductController::class, 'activate'])->name('products.activate');
 
         Route::prefix('sales')->name('sales.')->group(function () {
-            Route::get('/',           [SalesController::class, 'index'])->name('index');
-            Route::post('/store',     [SalesController::class, 'store'])->name('store');
+            Route::get('/', [SalesController::class, 'index'])->name('index');
+            Route::post('/store', [SalesController::class, 'store'])->name('store');
             Route::get('/invoice/{id}', [SalesController::class, 'invoice'])->name('invoice');
-            Route::get('/history',    [SalesController::class, 'history'])->name('history');
+            Route::get('/history', [SalesController::class, 'history'])->name('history');
+            Route::delete('/{id}', [SalesController::class, 'destroy'])->name('destroy');
         });
+
 
         Route::prefix('purchases')->name('purchases.')->group(function () {
             Route::get('/',           [PurchaseController::class, 'index'])->name('index');

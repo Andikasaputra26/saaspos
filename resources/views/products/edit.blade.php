@@ -3,192 +3,202 @@
 @section('title', 'Edit Produk')
 
 @section('content')
-<div class="container py-4">
+<div class="main-content-wrap">
 
-  {{-- === HEADER === --}}
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-    <div>
-      <h2 class="fw-bold text-primary mb-1">Edit Produk</h2>
-      <p class="text-muted small mb-0">
-        Perbarui informasi produk untuk toko
-        <strong>{{ \App\Models\Store::find(session('store_id'))->name ?? 'Anda' }}</strong>.
-      </p>
+    {{-- === HEADER & BREADCRUMB === --}}
+    <div class="flex items-center flex-wrap justify-between gap20 mb-27">
+        <h3>Edit Product</h3>
+        <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
+            <li>
+                <a href="{{ route('dashboard') }}"><div class="text-tiny">Dashboard</div></a>
+            </li>
+            <li><i class="icon-chevron-right"></i></li>
+            <li><a href="#"><div class="text-tiny">Ecommerce</div></a></li>
+            <li><i class="icon-chevron-right"></i></li>
+            <li><div class="text-tiny">Edit Product</div></li>
+        </ul>
     </div>
-    <a href="{{ route('products.index') }}" class="btn btn-outline-secondary btn-sm mt-2 mt-md-0">
-      <i class="bi bi-arrow-left-circle me-1"></i> Kembali
-    </a>
-  </div>
 
-  {{-- === FORM EDIT PRODUK === --}}
-  <div class="card border-0 shadow-sm rounded-4">
-    <div class="card-body p-4">
-      <form action="{{ route('products.update', $storeProduct->id) }}" method="POST" enctype="multipart/form-data">
+    {{-- === FORM EDIT PRODUK === --}}
+    <form action="{{ route('products.update', $storeProduct->id) }}" method="POST" enctype="multipart/form-data" class="tf-section-2 form-add-product">
         @csrf
         @method('PUT')
 
-        <div class="row g-4">
+        {{-- === BOX 1: INFORMASI PRODUK === --}}
+        <div class="wg-box mb-5">
+            <fieldset class="name">
+                <div class="body-title mb-10">Product Name <span class="tf-color-1">*</span></div>
+                <input type="text"
+                       name="name"
+                       placeholder="Enter product name"
+                       value="{{ old('name', $storeProduct->product->name) }}"
+                       required>
+                <div class="text-tiny text-muted mt-1">Do not exceed 50 characters when entering the product name.</div>
+                @error('name') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+            </fieldset>
 
-          {{-- === KOLOM KIRI: DETAIL PRODUK === --}}
-          <div class="col-md-7">
+            <div class="gap22 cols">
+                <fieldset class="category">
+                    <div class="body-title mb-10">Category</div>
+                    <input type="text"
+                           name="category"
+                           placeholder="e.g. Drinks, Snacks, Accessories"
+                           value="{{ old('category', $storeProduct->product->category) }}">
+                    @error('category') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                </fieldset>
 
-            {{-- Nama Produk --}}
-            <div class="mb-3">
-              <label for="name" class="form-label fw-semibold">Nama Produk <span class="text-danger">*</span></label>
-              <input type="text" name="name" id="name"
-                     class="form-control @error('name') is-invalid @enderror"
-                     value="{{ old('name', $storeProduct->product->name) }}" required>
-              @error('name')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+                <fieldset class="price">
+                    <div class="body-title mb-10">Price (Rp) <span class="tf-color-1">*</span></div>
+                    <input type="number"
+                           name="price"
+                           min="0"
+                           step="100"
+                           placeholder="e.g. 25000"
+                           value="{{ old('price', $storeProduct->price) }}"
+                           required>
+                    @error('price') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                </fieldset>
             </div>
 
-            {{-- Kategori --}}
-            <div class="mb-3">
-              <label for="category" class="form-label fw-semibold">Kategori</label>
-              <input type="text" name="category" id="category"
-                     class="form-control @error('category') is-invalid @enderror"
-                     value="{{ old('category', $storeProduct->product->category) }}">
-              @error('category')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
+            <div class="gap22 cols">
+                <fieldset class="stock">
+                    <div class="body-title mb-10">Stock <span class="tf-color-1">*</span></div>
+                    <input type="number"
+                           name="stock"
+                           min="0"
+                           placeholder="Enter current stock"
+                           value="{{ old('stock', $storeProduct->stock) }}"
+                           required>
+                    @error('stock') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+                </fieldset>
+
+                <fieldset class="status">
+                    <div class="body-title mb-10">Status</div>
+                    <div class="select">
+                        <select name="is_active" id="is_active">
+                            <option value="1" {{ $storeProduct->is_active ? 'selected' : '' }}>Active</option>
+                            <option value="0" {{ !$storeProduct->is_active ? 'selected' : '' }}>Inactive</option>
+                        </select>
+                    </div>
+                </fieldset>
             </div>
 
-            {{-- Harga --}}
-            <div class="mb-3">
-              <label for="price" class="form-label fw-semibold">Harga (Rp) <span class="text-danger">*</span></label>
-              <input type="number" name="price" id="price" min="0" step="100"
-                     class="form-control @error('price') is-invalid @enderror"
-                     value="{{ old('price', $storeProduct->price) }}" required>
-              @error('price')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <div class="mb-3">
-              <label for="is_active" class="form-label">Status Produk</label>
-              <select name="is_active" id="is_active" class="form-select">
-                <option value="1" {{ $storeProduct->is_active ? 'selected' : '' }}>Aktif</option>
-                <option value="0" {{ !$storeProduct->is_active ? 'selected' : '' }}>Nonaktif</option>
-              </select>
-            </div>
-
-            {{-- Stok --}}
-            <div class="mb-3">
-              <label for="stock" class="form-label fw-semibold">Stok</label>
-              <input type="number" name="stock" id="stock" min="0"
-                     class="form-control @error('stock') is-invalid @enderror"
-                     value="{{ old('stock', $storeProduct->stock) }}" required>
-              @error('stock')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-
-            {{-- Deskripsi --}}
-            <div class="mb-3">
-              <label for="description" class="form-label fw-semibold">Deskripsi Produk</label>
-              <textarea name="description" id="description" rows="4"
-                        class="form-control @error('description') is-invalid @enderror"
-                        placeholder="Tuliskan detail produk seperti bahan, ukuran, atau catatan penting">{{ old('description', $storeProduct->product->description) }}</textarea>
-              @error('description')
-                <div class="invalid-feedback">{{ $message }}</div>
-              @enderror
-            </div>
-          </div>
-
-          {{-- === KOLOM KANAN: GAMBAR PRODUK === --}}
-          <div class="col-md-5 text-center">
-            <label class="form-label fw-semibold d-block mb-2">Gambar Produk</label>
-
-            <div class="upload-container mb-3">
-              @if($storeProduct->product->image)
-                <img id="previewImage"
-                     src="{{ asset('storage/' . $storeProduct->product->image) }}"
-                     alt="Gambar Produk"
-                     class="img-thumbnail rounded-4 shadow-sm"
-                     style="max-height:230px; object-fit:cover;">
-              @else
-                <img id="previewImage"
-                     src="https://cdn-icons-png.flaticon.com/512/685/685655.png"
-                     alt="Preview Gambar"
-                     class="img-thumbnail rounded-4 shadow-sm"
-                     style="max-height:230px; object-fit:cover;">
-              @endif
-
-              <input type="file" name="image" id="image" accept="image/*"
-                     class="form-control mt-3 @error('image') is-invalid @enderror">
-              @error('image')
-                <div class="invalid-feedback d-block">{{ $message }}</div>
-              @enderror
-            </div>
-
-            <small class="text-muted d-block">
-              Format: JPG, JPEG, PNG &nbsp; • &nbsp; Maksimal 2 MB
-            </small>
-          </div>
+            <fieldset class="description">
+                <div class="body-title mb-10">Description</div>
+                <textarea name="description"
+                          rows="4"
+                          placeholder="Enter details such as material, size, variants, or important notes">{{ old('description', $storeProduct->product->description) }}</textarea>
+                @error('description') <div class="text-danger small mt-1">{{ $message }}</div> @enderror
+            </fieldset>
         </div>
 
-        <hr class="my-4">
+        {{-- === BOX 2: GAMBAR PRODUK === --}}
+        <div class="wg-box">
+            <fieldset>
+                <div class="body-title mb-10">Product Image</div>
+                <div class="upload-image mb-16">
+                    <div class="item up-load" style="width:100%;">
+                        <label class="uploadfile w-full cursor-pointer" for="image">
+                            <div class="flex flex-col items-center justify-center py-6 border-2 border-dashed rounded-xl border-gray-300 hover:border-indigo-500 transition-all">
+                                @if($storeProduct->product->image)
+                                    <img id="previewImage"
+                                         src="{{ asset('storage/' . $storeProduct->product->image) }}"
+                                         alt="Preview Image"
+                                         class="rounded-xl mb-3"
+                                         style="max-height:200px;object-fit:cover;">
+                                @else
+                                    <img id="previewImage"
+                                         src="https://cdn-icons-png.flaticon.com/512/685/685655.png"
+                                         alt="Preview Image"
+                                         class="rounded-xl mb-3"
+                                         style="max-height:200px;object-fit:cover;">
+                                @endif
+                                <span class="icon mb-1"><i class="icon-upload-cloud"></i></span>
+                                <span class="text-tiny">Drop your image here or <span class="tf-color">click to browse</span></span>
+                                <input type="file" id="image" name="image" accept="image/*" hidden>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <div class="body-text text-muted text-center text-sm">
+                    Format: JPG, JPEG, PNG • Maksimum 2 MB
+                </div>
+            </fieldset>
 
-        <div class="d-flex justify-content-between align-items-center">
-          <div class="text-muted small">
-            SKU: <strong>{{ $storeProduct->product->sku ?? '-' }}</strong>
-          </div>
-          <button type="submit" class="btn btn-primary px-4 py-2">
-            <i class="bi bi-save me-1"></i> Simpan Perubahan
-          </button>
+            <div class="divider my-4"></div>
+
+            <div class="flex items-center justify-between flex-wrap gap10">
+                <div class="text-tiny text-muted">
+                    SKU: <strong>{{ $storeProduct->product->sku ?? '-' }}</strong>
+                </div>
+                <button class="tf-button style-1 w200" type="submit">
+                    <i class="icon-save mr-2"></i> Save Changes
+                </button>
+            </div>
         </div>
-      </form>
-    </div>
-  </div>
+    </form>
 </div>
 @endsection
 
 @push('scripts')
 <script>
-  // Preview gambar baru
-  document.getElementById('image')?.addEventListener('change', function(e) {
+document.getElementById('image')?.addEventListener('change', function (e) {
     const file = e.target.files[0];
     if (file && file.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = ev => document.getElementById('previewImage').src = ev.target.result;
-      reader.readAsDataURL(file);
+        const reader = new FileReader();
+        reader.onload = ev => document.getElementById('previewImage').src = ev.target.result;
+        reader.readAsDataURL(file);
     }
-  });
+});
 </script>
 @endpush
 
 @push('styles')
 <style>
-  input.form-control, textarea.form-control {
+/* === Form Input Styling === */
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+    border: 1px solid #d1d5db;
     border-radius: 0.6rem;
-  }
-
-  .btn-primary {
-    border-radius: 0.6rem;
+    padding: 8px 12px;
+    width: 100%;
+    font-size: 14px;
     transition: all 0.25s ease;
-  }
+}
+input:focus, textarea:focus, select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.15);
+}
 
-  .btn-primary:hover {
+/* === Button === */
+.tf-button.style-1 {
+    background-color: #2563eb;
+    color: #fff;
+    border-radius: 0.6rem;
+    padding: 10px 20px;
+    transition: all 0.25s ease;
+}
+.tf-button.style-1:hover {
+    background-color: #1d4ed8;
     transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(37,117,252,0.3);
-  }
+}
 
-  .upload-container {
-    border: 2px dashed var(--bs-border-color);
-    border-radius: 1rem;
-    padding: 15px;
-    background-color: var(--bs-light-bg-subtle, #f8f9fa);
-    transition: 0.3s;
-  }
+/* === Upload Area === */
+.upload-image .uploadfile {
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.upload-image .uploadfile:hover {
+    background-color: #f3f4f6;
+}
 
-  .upload-container:hover {
-    background-color: var(--bs-gray-100);
-  }
-
-  @media (max-width: 768px) {
-    .upload-container {
-      margin-top: 1rem;
+/* === Responsive === */
+@media (max-width: 768px) {
+    .cols {
+        flex-direction: column !important;
     }
-  }
+}
 </style>
 @endpush

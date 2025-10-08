@@ -19,7 +19,6 @@ class ProductController extends Controller
         $query = StoreProduct::with('product')
             ->where('store_id', $storeId);
 
-        // Filter status (aktif / nonaktif)
         $status = $request->input('status');
         if ($status === 'aktif') {
             $query->where('is_active', true);
@@ -27,16 +26,20 @@ class ProductController extends Controller
             $query->where('is_active', false);
         }
 
-        // Pencarian nama / SKU / kategori
         if ($search = $request->input('search')) {
             $query->whereHas('product', function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('sku', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%");
+                ->orWhere('sku', 'like', "%{$search}%")
+                ->orWhere('category', 'like', "%{$search}%");
             });
         }
 
         $storeProducts = $query->orderByDesc('id')->paginate(10)->withQueryString();
+
+        if ($request->ajax()) {
+            $html = view('products.partials._product_rows', compact('storeProducts'))->render();
+            return response()->json(['html' => $html]);
+        }
 
         return view('products.index', compact('storeProducts', 'status'));
     }

@@ -3,10 +3,10 @@
     <!-- === LOGO AREA === -->
     <div class="box-logo d-flex align-items-center justify-content-between">
         <a href="{{ route('dashboard') }}" id="site-logo-inner">
-            <img id="logo_header" alt="{{ config('app.name') }}" 
+            {{-- <img id="logo_header" alt="{{ config('app.name') }}" 
                  src="{{ asset('images/logo/logo.png') }}" 
                  data-light="{{ asset('images/logo/logo.png') }}" 
-                 data-dark="{{ asset('images/logo/logo-dark.png') }}">
+                 data-dark="{{ asset('images/logo/logo-dark.png') }}"> --}}
         </a>
         <div class="button-show-hide">
             <i class="icon-menu-left"></i>
@@ -47,12 +47,12 @@
                                     <div class="text">Daftar Produk</div>
                                 </a>
                             </li>
-                            <li class="sub-menu-item">
+                            {{-- <li class="sub-menu-item">
                                 <a href="{{ route('products.create') }}" 
                                    class="{{ request()->routeIs('products.create') ? 'active' : '' }}">
                                     <div class="text">Tambah Produk</div>
                                 </a>
-                            </li>
+                            </li> --}}
                         </ul>
                     </li>
 

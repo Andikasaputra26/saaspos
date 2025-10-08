@@ -7,6 +7,7 @@
     <title>{{ $title ?? 'SaaS POS - Dashboard' }}</title>
     
     <meta name="author" content="{{ config('app.name') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
@@ -60,14 +61,6 @@
                             @yield('content')
                         </div>
                         <!-- /main-content-wrap -->
-
-                        <!-- bottom-page -->
-                        <div class="bottom-page">
-                            <div class="body-text">Copyright © {{ date('Y') }} {{ config('app.name') }}. Design with</div>
-                            <i class="icon-heart"></i>
-                            <div class="body-text">by <a href="#">Your Company</a> All rights reserved.</div>
-                        </div>
-                        <!-- /bottom-page -->
                     </div>
                     <!-- /main-content -->
                 </div>
@@ -81,6 +74,15 @@
 
     <!-- Javascript -->
     <script src="{{ asset('js/jquery.min.js') }}"></script>
+    <script src="{{ asset('js/apexcharts/line-chart-1.js') }}"></script>
+    <script src="{{ asset('js/apexcharts/line-chart-2.js') }}"></script>
+    <script src="{{ asset('js/apexcharts/line-chart-3.js') }}"></script>
+    <script src="{{ asset('js/apexcharts/line-chart-4.js') }}"></script>
+    <script src="{{ asset('js/apexcharts/line-chart-5.js') }}"></script>
+    <script src="{{ asset('js/jvectormap-1.2.2.min.js') }}"></script>
+    <script src="{{ asset('js/jvectormap-us-lcc.js') }}"></script>
+    <script src="{{ asset('js/jvectormap.js') }}"></script>
+    <script src="{{ asset('js/apexcharts/apexcharts.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap-select.min.js') }}"></script>
     <script src="{{ asset('js/zoom.js') }}"></script>
