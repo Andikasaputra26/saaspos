@@ -44,13 +44,6 @@
             <ul class="flex flex-column">
                 @foreach ($sale->items as $item)
                     <li class="product-item gap14">
-                        <div class="image no-bg">
-                            <img src="{{ $item->storeProduct->product->image 
-                                        ? asset('storage/'.$item->storeProduct->product->image) 
-                                        : asset('assets/img/no-image.png') }}" 
-                                 alt="{{ $item->storeProduct->product->name }}" 
-                                 style="width:45px;height:45px;object-fit:cover;">
-                        </div>
                         <div class="flex items-center justify-between gap20 flex-grow">
                             {{-- Nama Produk --}}
                             <div class="body-title-2">{{ $item->storeProduct->product->name ?? '-' }}</div>

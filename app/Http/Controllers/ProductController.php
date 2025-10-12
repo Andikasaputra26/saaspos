@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Products;
 use App\Models\Store;
+use App\Models\Products;
+use Illuminate\Support\Str;
 use App\Models\StoreProduct;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
+use App\Models\StockMovement;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -80,7 +81,24 @@ class ProductController extends Controller
             'product_id' => $product->id,
             'price' => $validated['price'],
             'stock' => $validated['stock'],
-            'is_active' => $validated['is_active'] ?? true, // ✅ default aktif
+            'is_active' => $validated['is_active'] ?? true, 
+        ]);
+
+        $storeProduct = StoreProduct::create([
+            'store_id' => $storeId,
+            'product_id' => $product->id,
+            'price' => $validated['price'],
+            'stock' => $validated['stock'],
+            'is_active' => $validated['is_active'] ?? true,
+        ]);
+
+        // catat stok awal
+        StockMovement::create([
+            'store_id' => $storeId,
+            'store_product_id' => $storeProduct->id,
+            'type' => 'in',
+            'quantity' => $validated['stock'],
+            'note' => 'Stok awal produk baru',
         ]);
 
         return redirect()->route('products.index')->with('success', 'Produk berhasil ditambahkan ke toko!');
@@ -106,8 +124,8 @@ class ProductController extends Controller
 
         $storeProduct = StoreProduct::with('product')->findOrFail($id);
         $product = $storeProduct->product;
+        $oldStock = $storeProduct->stock;
 
-        // Jika ada gambar baru, hapus gambar lama
         if ($request->hasFile('image')) {
             if ($product->image && Storage::disk('public')->exists($product->image)) {
                 Storage::disk('public')->delete($product->image);
@@ -115,7 +133,6 @@ class ProductController extends Controller
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
-        // Update produk master
         $product->update([
             'name' => $validated['name'],
             'category' => $validated['category'] ?? null,
@@ -123,14 +140,27 @@ class ProductController extends Controller
             'image' => $validated['image'] ?? $product->image,
         ]);
 
-        // Update produk di toko
         $storeProduct->update([
             'price' => $validated['price'],
             'stock' => $validated['stock'],
             'is_active' => $validated['is_active'] ?? true,
         ]);
 
-        return redirect()->route('products.index')->with('success', 'Produk berhasil diperbarui!');
+        $diff = $validated['stock'] - $oldStock;
+        if ($diff != 0) {
+            \App\Models\StockMovement::create([
+                'store_id' => $storeProduct->store_id,
+                'store_product_id' => $storeProduct->id,
+                'type' => $diff > 0 ? 'in' : 'out',
+                'quantity' => abs($diff),
+                'notes' => 'Perubahan stok manual dari halaman edit produk',
+                'user_id' => Auth::id(),
+            ]);
+        }
+
+        return redirect()
+            ->route('products.index')
+            ->with('success', '✅ Produk berhasil diperbarui!');
     }
 
     public function destroy($id)
@@ -139,20 +169,32 @@ class ProductController extends Controller
         $product = $storeProduct->product;
 
         try {
-            // Jika produk sudah digunakan di transaksi
             if ($storeProduct->saleItems()->exists()) {
-                // Nonaktifkan saja agar tidak muncul di kasir
                 $storeProduct->update(['is_active' => false]);
+                $message = '⚠️ Produk sudah pernah digunakan di transaksi, jadi hanya dinonaktifkan.';
 
-                return redirect()->route('products.index')
-                    ->with('error', '⚠️ Produk sudah pernah digunakan di transaksi, jadi hanya dinonaktifkan.');
+                if (request()->ajax()) {
+                    return response()->json(['status' => 'warning', 'message' => $message]);
+                }
+
+                return redirect()->route('products.index')->with('error', $message);
             }
 
-            // Hapus relasi toko
+            if ($storeProduct->stock > 0) {
+                \App\Models\StockMovement::create([
+                    'store_id' => $storeProduct->store_id,
+                    'store_product_id' => $storeProduct->id,
+                    'type' => 'out',
+                    'quantity' => $storeProduct->stock,
+                    'note' => 'Produk dihapus dari toko',
+                ]);
+            }
+
             $storeProduct->delete();
 
-            // Jika produk tidak digunakan di toko lain, hapus juga master produk dan gambar
-            $usedInOtherStores = StoreProduct::where('product_id', $product->id)->exists();
+            $usedInOtherStores = StoreProduct::where('product_id', $product->id)
+                ->where('id', '!=', $storeProduct->id)
+                ->exists();
 
             if (!$usedInOtherStores) {
                 if ($product->image && Storage::disk('public')->exists($product->image)) {
@@ -161,12 +203,35 @@ class ProductController extends Controller
                 $product->delete();
             }
 
-            return redirect()->route('products.index')
-                ->with('success', '✅ Produk berhasil dihapus.');
+            $message = '✅ Produk berhasil dihapus permanen.';
+            if (request()->ajax()) {
+                return response()->json(['status' => 'success', 'message' => $message]);
+            }
+
+            return redirect()->route('products.index')->with('success', $message);
+
         } catch (\Exception $e) {
-            return redirect()->route('products.index')
-                ->with('error', '❌ Terjadi kesalahan: ' . $e->getMessage());
+            $error = '❌ Gagal menghapus produk: ' . $e->getMessage();
+
+            if (request()->ajax()) {
+                return response()->json(['status' => 'error', 'message' => $error], 500);
+            }
+
+            return redirect()->route('products.index')->with('error', $error);
         }
+    }
+
+    public function deactivate($id)
+    {
+        $storeProduct = StoreProduct::findOrFail($id);
+        $storeProduct->update(['is_active' => false]);
+
+        $message = '✅ Produk berhasil dinonaktifkan.';
+        if (request()->ajax()) {
+            return response()->json(['status' => 'success', 'message' => $message]);
+        }
+
+        return back()->with('success', $message);
     }
 
     public function activate($id)
@@ -174,7 +239,9 @@ class ProductController extends Controller
         $storeProduct = StoreProduct::findOrFail($id);
         $storeProduct->update(['is_active' => true]);
 
-        return redirect()->route('products.index')
-            ->with('success', '✅ Produk berhasil diaktifkan kembali.');
+        $msg = '✅ Produk berhasil diaktifkan kembali.';
+        return request()->ajax()
+            ? response()->json(['status' => 'success', 'message' => $msg])
+            : back()->with('success', $msg);
     }
 }

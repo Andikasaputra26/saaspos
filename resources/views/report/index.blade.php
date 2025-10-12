@@ -1,147 +1,153 @@
 @extends('layouts.app')
+
 @section('title', 'Laporan Penjualan')
 
-@push('styles')
-<style>
-  table td, table th { vertical-align: middle !important; }
-  .card-header { border-bottom: 1px solid #eee; }
-  .dt-buttons {
-    margin-bottom: 10px;
-  }
-  .dt-buttons .btn {
-    margin-right: 6px;
-  }
-</style>
-@endpush
-
 @section('content')
-<div class="container py-4">
+<div class="main-content-wrap">
 
-  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
-    <div>
-      <h2 class="fw-bold text-primary mb-1">Laporan Penjualan</h2>
-      <p class="text-muted small mb-0">
-        Pilih periode untuk melihat laporan penjualan dan export data.
-      </p>
+    <div class="flex items-center flex-wrap justify-between gap20 mb-27">
+        <h3>Laporan Penjualan</h3>
+        <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
+            <li><a href="{{ route('dashboard') }}"><div class="text-tiny">Dashboard</div></a></li>
+            <li><i class="icon-chevron-right"></i></li>
+            <li><div class="text-tiny">Laporan Penjualan</div></li>
+        </ul>
     </div>
 
-    <form id="filterForm" class="d-flex flex-wrap gap-2 mt-3 mt-md-0">
-      <input type="date" id="start_date" value="{{ $startDate }}" class="form-control form-control-sm">
-      <input type="date" id="end_date" value="{{ $endDate }}" class="form-control form-control-sm">
-      <button type="submit" class="btn btn-primary btn-sm">
-        <i class="bi bi-filter me-1"></i> Terapkan Filter
-      </button>
-      <button type="button" id="resetFilter" class="btn btn-outline-secondary btn-sm">
-        <i class="bi bi-arrow-clockwise me-1"></i> Reset
-      </button>
-    </form>
-  </div>
+    <div class="wg-box mb-4">
+        <form method="GET" class="flex flex-wrap items-end gap20">
+            <div>
+                <label class="body-title mb-2">Dari Tanggal</label>
+                <input type="date" name="start_date" value="{{ $startDate }}" class="form-control w180">
+            </div>
+            <div>
+                <label class="body-title mb-2">Sampai Tanggal</label>
+                <input type="date" name="end_date" value="{{ $endDate }}" class="form-control w180">
+            </div>
+            <button class="tf-button style-1" type="submit">
+                <i class="icon-filter"></i> Filter
+            </button>
+        </form>
+    </div>
 
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <x-card-stat title="Total Transaksi" value="{{ number_format($totalTransaksi) }} Nota" icon="bi-receipt" color="primary" />
-    </div>
-    <div class="col-md-4">
-      <x-card-stat title="Total Item Terjual" value="{{ number_format($totalItemTerjual) }} Item" icon="bi-basket" color="warning" />
-    </div>
-    <div class="col-md-4">
-      <x-card-stat title="Total Omzet" value="Rp {{ number_format($totalOmzet, 0, ',', '.') }}" icon="bi-cash-stack" color="success" />
-    </div>
-  </div>
+    <div class="wg-box mb-4">
+        <h5 class="mb-4"><i class="icon-bar-chart-2"></i> Ringkasan Penjualan</h5>
 
-  <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-header bg-light fw-semibold">
-      <i class="bi bi-box-seam me-2"></i> Penjualan per Produk
+        <div class="flex flex-wrap gap40 mb-5">
+            <div>
+                <div class="text-tiny text-muted mb-1">Total Transaksi</div>
+                <h4 class="fw-bold">{{ number_format($totalTransaksi, 0, ',', '.') }}</h4>
+            </div>
+            <div>
+                <div class="text-tiny text-muted mb-1">Total Omzet</div>
+                <h4 class="fw-bold tf-color">Rp {{ number_format($totalOmzet, 0, ',', '.') }}</h4>
+            </div>
+            <div>
+                <div class="text-tiny text-muted mb-1">Total Item Terjual</div>
+                <h4 class="fw-bold">{{ number_format($totalItemTerjual, 0, ',', '.') }}</h4>
+            </div>
+        </div>
+
+        <div id="salesChart" class="mt-4"></div>
     </div>
-    <div class="card-body p-0">
-      <div class="table-responsive">
-        <table id="reportTable" class="table table-hover align-middle mb-0">
-          <thead class="table-light">
-            <tr>
-              <th width="60">#</th>
-              <th>Produk</th>
-              <th class="text-center" width="120">Qty</th>
-              <th class="text-end" width="180">Subtotal</th>
-              <th hidden>Tanggal</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse($produkTerjual as $i => $p)
-              <tr data-tanggal="{{ $p->tanggal ?? now()->format('Y-m-d') }}">
-                <td>{{ $i + 1 }}</td>
-                <td>{{ $p->storeProduct->product->name ?? 'Produk dihapus' }}</td>
-                <td class="text-center">{{ $p->total_qty }}</td>
-                <td class="text-end">Rp {{ number_format($p->total_subtotal, 0, ',', '.') }}</td>
-                <td hidden>{{ $p->tanggal ?? now()->format('Y-m-d') }}</td>
-              </tr>
-            @empty
-              <tr>
-                <td colspan="4" class="text-center text-muted py-4">
-                  <i class="bi bi-emoji-neutral fs-4 d-block mb-2"></i>
-                  Tidak ada transaksi pada periode ini.
-                </td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
+
+    <div class="grid grid-cols-2 gap20 mb-4">
+        <div class="wg-box">
+            <h5 class="mb-3"><i class="icon-credit-card"></i> Perbandingan Metode Pembayaran</h5>
+            <div id="paymentChart" style="min-height: 320px;"></div>
+        </div>
+
+        <div class="wg-box">
+            <h5 class="mb-3"><i class="icon-star"></i> Top 5 Produk Terlaris</h5>
+            <div id="topProductChart" style="min-height: 320px;"></div>
+        </div>
     </div>
-  </div>
+
+    <div class="wg-box">
+        <h5 class="mb-3"><i class="icon-list"></i> Detail Produk Terlaris</h5>
+        <div class="wg-table table-all-attribute">
+            <ul class="table-title flex gap20 mb-14">
+                <li><div class="body-title w60">#</div></li>
+                <li><div class="body-title flex-grow">Nama Produk</div></li>
+                <li><div class="body-title w100 text-center">Qty Terjual</div></li>
+                <li><div class="body-title w140 text-end">Total Penjualan</div></li>
+            </ul>
+
+            <ul class="flex flex-column">
+                @forelse($produkTerjual as $i => $p)
+                    <li class="attribute-item flex items-center justify-between gap20">
+                        <div class="body-text w60">{{ $i + 1 }}</div>
+                        <div class="body-text flex-grow">{{ $p->storeProduct->product->name ?? '-' }}</div>
+                        <div class="body-text w100 text-center">{{ number_format($p->total_qty, 0, ',', '.') }}</div>
+                        <div class="body-text w140 text-end">
+                            Rp {{ number_format($p->total_subtotal, 0, ',', '.') }}
+                        </div>
+                    </li>
+                @empty
+                    <li class="text-center text-muted py-3">Tidak ada data penjualan untuk periode ini</li>
+                @endforelse
+            </ul>
+        </div>
+    </div>
+
 </div>
 @endsection
 
 @push('scripts')
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css">
-<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
-<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.bootstrap5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.print.min.js"></script>
-
 <script>
-$(document).ready(function () {
-  const table = $('#reportTable').DataTable({
-    dom: 'Bfrtip',
-    buttons: [
-      { extend: 'excelHtml5', text: '<i class="bi bi-file-earmark-excel me-1"></i> Excel', className: 'btn btn-success btn-sm' },
-      { extend: 'pdfHtml5', text: '<i class="bi bi-file-earmark-pdf me-1"></i> PDF', className: 'btn btn-danger btn-sm', orientation: 'portrait', pageSize: 'A4' },
-      { extend: 'print', text: '<i class="bi bi-printer me-1"></i> Print', className: 'btn btn-secondary btn-sm' }
-    ],
-    order: [],
-    paging: false,
-    searching: true,
-    info: false,
-    language: { emptyTable: 'Tidak ada data penjualan pada periode ini' }
-  });
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = @json($chartData);
+    const labels = chartData.length ? chartData.map(x => x.tanggal) : ['-'];
+    const values = chartData.length ? chartData.map(x => x.omzet) : [0];
 
-  $('#filterForm').on('submit', function (e) {
-    e.preventDefault();
-    const start = $('#start_date').val();
-    const end = $('#end_date').val();
+    new ApexCharts(document.querySelector("#salesChart"), {
+        chart: { type: 'area', height: 300, toolbar: { show: false }, foreColor: '#64748b' },
+        series: [{ name: 'Omzet Harian', data: values }],
+        xaxis: { categories: labels, labels: { style: { fontSize: '12px' } } },
+        colors: ['#2563eb'],
+        stroke: { width: 3, curve: 'smooth' },
+        fill: { type: 'gradient', gradient: { shadeIntensity: 0.4, opacityFrom: 0.4, opacityTo: 0.05 } },
+        grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
+        tooltip: { y: { formatter: val => 'Rp ' + val.toLocaleString('id-ID') } }
+    }).render();
 
-    table.rows().every(function () {
-      const date = this.data()[4]; 
-      if (date >= start && date <= end) {
-        $(this.node()).show();
-      } else {
-        $(this.node()).hide();
-      }
-    });
-  });
+    const paymentData = @json($paymentSummary);
+    new ApexCharts(document.querySelector("#paymentChart"), {
+        chart: { type: 'donut', height: 320 },
+        series: paymentData.map(x => x.total),
+        labels: paymentData.map(x => x.method),
+        colors: ['#22c55e', '#3b82f6', '#f59e0b'],
+        legend: { position: 'bottom' },
+        tooltip: { y: { formatter: val => 'Rp ' + val.toLocaleString('id-ID') } }
+    }).render();
 
-  $('#resetFilter').on('click', function () {
-    $('#start_date').val('');
-    $('#end_date').val('');
-    table.rows().every(function () {
-      $(this.node()).show();
-    });
-  });
+    const topProducts = @json($produkTerjual->take(5));
+    new ApexCharts(document.querySelector("#topProductChart"), {
+        chart: { type: 'bar', height: 320, toolbar: { show: false } },
+        series: [{ name: 'Qty Terjual', data: topProducts.map(p => p.total_qty) }],
+        xaxis: { categories: topProducts.map(p => p.store_product?.product?.name ?? '-') },
+        colors: ['#10b981'],
+        plotOptions: { bar: { horizontal: true, borderRadius: 4 } },
+        dataLabels: { enabled: false },
+        grid: { borderColor: '#e2e8f0', strokeDashArray: 4 }
+    }).render();
 });
 </script>
+@endpush
+
+@push('styles')
+<style>
+.wg-table ul { list-style: none; margin: 0; padding: 0; }
+.table-title { border-bottom: 1px solid #e5e7eb; font-weight: 600; color: #374151; }
+.attribute-item { border-bottom: 1px dashed #e5e7eb; padding: 10px 0; transition: .2s; }
+.attribute-item:hover { background: #f9fafb; border-radius: 6px; }
+.body-text { font-size: 13px; color: #4b5563; }
+.text-muted { color: #9ca3af; }
+
+.w60 { width: 60px; }
+.w100 { width: 100px; }
+.w140 { width: 140px; }
+
+.tf-color { color: #2563eb; }
+</style>
 @endpush

@@ -12,34 +12,26 @@ use Illuminate\Support\Facades\DB;
 
 class SalesController extends Controller
 {
-    /**
-     * Menampilkan halaman transaksi (daftar produk aktif)
-     */
     public function index()
     {
         $user = Auth::user();
         $storeId = session('store_id');
 
-        // Ambil toko yang dimiliki user owner atau yang sedang aktif
         if ($user->role === 'owner') {
             $storeIds = Store::where('user_id', $user->id)->pluck('id');
         } else {
             $storeIds = [$storeId];
         }
 
-        // 🔥 Ambil hanya produk aktif yang bisa dijual
         $products = StoreProduct::with('product')
             ->whereIn('store_id', $storeIds)
-            ->where('is_active', true) // ✅ hanya produk aktif
+            ->where('is_active', true) 
             ->orderByDesc('id')
             ->get();
 
         return view('sales.index', compact('products'));
     }
 
-    /**
-     * Simpan transaksi penjualan baru
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -55,7 +47,6 @@ class SalesController extends Controller
         try {
             $invoiceNumber = 'INV-' . now()->format('Ymd') . '-' . str_pad(Sales::count() + 1, 4, '0', STR_PAD_LEFT);
 
-            // 🔎 Cek apakah semua produk masih aktif dan stok cukup
             foreach ($request->cart as $item) {
                 $storeProduct = StoreProduct::find($item['id']);
 
@@ -72,7 +63,6 @@ class SalesController extends Controller
                 }
             }
 
-            // 🔥 Simpan data penjualan utama
             $sale = Sales::create([
                 'store_id' => $storeId,
                 'user_id' => $userId,
@@ -81,7 +71,6 @@ class SalesController extends Controller
                 'payment_method' => $request->payment_method,
             ]);
 
-            // Simpan item transaksi
             foreach ($request->cart as $item) {
                 $storeProduct = StoreProduct::find($item['id']);
 
@@ -93,7 +82,6 @@ class SalesController extends Controller
                     'subtotal' => $item['price'] * $item['qty'],
                 ]);
 
-                // Kurangi stok produk
                 $storeProduct->decrement('stock', $item['qty']);
             }
 
@@ -113,9 +101,6 @@ class SalesController extends Controller
         }
     }
 
-    /**
-     * Menampilkan halaman nota/invoice penjualan
-     */
     public function invoice($id)
     {
         $sale = Sales::with([
@@ -127,9 +112,6 @@ class SalesController extends Controller
         return view('sales.invoice', compact('sale'));
     }
 
-    /**
-     * Menampilkan riwayat penjualan hari ini
-     */
     public function history(Request $request)
     {
         $storeId = session('store_id');
@@ -154,7 +136,6 @@ class SalesController extends Controller
         $sales = $query->get();
         $totalHariIni = $sales->sum('total');
 
-        // --- Jika request AJAX, kirim JSON ---
         if ($request->ajax()) {
             $data = $sales->map(function ($s, $i) {
                 return [
@@ -175,7 +156,6 @@ class SalesController extends Controller
             ]);
         }
 
-        // --- Jika bukan AJAX, render Blade biasa ---
         return view('sales.history', compact('sales', 'totalHariIni'));
     }
 
@@ -197,6 +177,4 @@ class SalesController extends Controller
             ], 500);
         }
     }
-
-
 }

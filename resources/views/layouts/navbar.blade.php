@@ -22,7 +22,12 @@
 
             {{-- === HEADER RIGHT MENU === --}}
             <div class="header-grid">
-
+                @if(session('store_id'))
+                    @php $activeStore = \App\Models\Store::find(session('store_id')); @endphp
+                    <div class="text-sm text-gray-600">
+                        🏬 <strong>{{ $activeStore->name }}</strong> (aktif)
+                    </div>
+                @endif
                 {{-- === DARK MODE SWITCH === --}}
                 <div class="header-item button-dark-light">
                     <i class="icon-moon"></i>

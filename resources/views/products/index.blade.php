@@ -5,6 +5,7 @@
 @section('content')
 <div class="main-content-wrap">
 
+    {{-- === HEADER === --}}
     <div class="flex items-center flex-wrap justify-between gap20 mb-27">
         <h3>Daftar Produk</h3>
         <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
@@ -20,7 +21,10 @@
         </ul>
     </div>
 
+    {{-- === MAIN TABLE WRAPPER === --}}
     <div class="wg-box">
+
+        {{-- === HEADER TIP === --}}
         <div class="title-box">
             <i class="icon-coffee"></i>
             <div class="body-text">
@@ -28,10 +32,12 @@
             </div>
         </div>
 
+        {{-- === FILTER & SEARCH === --}}
         <div class="flex items-center justify-between gap20 flex-wrap mb-4">
             <div class="wg-filter flex items-center gap15 flex-wrap flex-grow">
                 <div class="flex items-center gap10 flex-wrap">
 
+                    {{-- Per Page Selector --}}
                     <div class="filter-group flex items-center gap6">
                         <span class="label">Show</span>
                         <div class="select-wrapper">
@@ -56,15 +62,13 @@
                         </div>
                     </div>
                 </div>
+
+                {{-- Search Form --}}
                 <form class="form-search ms-auto" id="ajaxSearchForm" onsubmit="return false;">
                     <fieldset class="name">
-                        <input type="text"
-                            id="searchInput"
-                            name="search"
-                            placeholder="Search here..."
-                            value="{{ request('search') }}"
-                            autocomplete="off"
-                            required>
+                        <input type="text" id="searchInput" name="search"
+                            placeholder="Search here..." value="{{ request('search') }}"
+                            autocomplete="off" required>
                     </fieldset>
                     <div class="button-submit">
                         <button type="submit"><i class="icon-search"></i></button>
@@ -72,11 +76,13 @@
                 </form>
             </div>
 
+            {{-- Tambah Data Button --}}
             <a href="{{ route('products.create') }}" class="tf-button style-1 w208 shrink-0">
                 <i class="icon-plus"></i> Tambahkan Data
             </a>
         </div>
 
+        {{-- === TABLE LIST === --}}
         <div class="wg-table table-product-list">
             <ul class="table-title flex gap20 mb-14">
                 <li><div class="body-title">Product</div></li>
@@ -104,13 +110,11 @@
                             </div>
 
                             <div class="body-text">#{{ $product->sku ?? $item->id }}</div>
-
                             <div class="body-text">Rp {{ number_format($item->price, 0, ',', '.') }}</div>
-
                             <div class="body-text">{{ $item->stock }}</div>
-
                             <div class="body-text">{{ $product->category ?? '-' }}</div>
 
+                            {{-- Stock Info --}}
                             <div>
                                 @if($item->stock > 10)
                                     <div class="block-available">Available</div>
@@ -121,6 +125,7 @@
                                 @endif
                             </div>
 
+                            {{-- Status Info --}}
                             <div>
                                 @if($item->is_active)
                                     <div class="block-available">Active</div>
@@ -129,19 +134,32 @@
                                 @endif
                             </div>
 
+                            {{-- Action Buttons --}}
                             <div class="list-icon-function">
-                                <a href="{{ route('products.show', $item->id) }}" class="item eye" title="View">
-                                    <i class="icon-eye"></i>
-                                </a>
                                 <a href="{{ route('products.edit', $item->id) }}" class="item edit" title="Edit">
                                     <i class="icon-edit-3"></i>
                                 </a>
-                                <form action="{{ route('products.destroy', $item->id) }}" method="POST" class="delete-form d-inline">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="item trash" title="Delete" style="border:none;background:none;">
+
+                                @if(!$item->is_active)
+                                    {{-- Tombol Aktifkan --}}
+                                    <button type="button" class="item play btn-activate"
+                                            data-id="{{ $item->id }}" title="Aktifkan kembali produk">
+                                        <i class="icon-play-circle"></i>
+                                    </button>
+                                @elseif($item->saleItems->isNotEmpty())
+                                    {{-- Tombol Nonaktifkan --}}
+                                    <button type="button" class="item pause btn-nonaktifkan"
+                                            data-id="{{ $item->id }}"
+                                            title="Produk pernah dijual, hanya bisa dinonaktifkan">
+                                        <i class="icon-pause-circle"></i>
+                                    </button>
+                                @else
+                                    {{-- Tombol Hapus --}}
+                                    <button type="button" class="item trash btn-delete"
+                                            data-id="{{ $item->id }}" title="Hapus Permanen">
                                         <i class="icon-trash-2"></i>
                                     </button>
-                                </form>
+                                @endif
                             </div>
                         </div>
                     </li>
@@ -151,6 +169,7 @@
             </ul>
         </div>
 
+        {{-- === FOOTER === --}}
         <div class="divider mt-3"></div>
         <div class="flex items-center justify-between flex-wrap gap10">
             <div class="text-tiny">
@@ -163,64 +182,46 @@
 </div>
 @endsection
 
-@push('scripts')
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@push('styles')
+<style>
+.block-available {
+    background: #dcfce7;
+    color: #166534;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+.block-not-available {
+    background: #fee2e2;
+    color: #991b1b;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+.block-limited {
+    background: #fef9c3;
+    color: #92400e;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+}
+</style>
+@endpush
 
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function () {
-    const $searchForm = $('#ajaxSearchForm');
-    const $searchInput = $('#searchInput');
-    const $productList = $('#productList');
-    const $statusFilter = $('#statusFilter');
-    const $perPageSelect = $('#perPageSelect');
-    let typingTimer;
-    const delay = 400; 
 
-    function loadProducts() {
-        $.ajax({
-            url: "{{ route('products.index') }}",
-            type: 'GET',
-            data: {
-                search: $searchInput.val(),
-                status: $statusFilter.val(),
-                per_page: $perPageSelect.val(),
-                ajax: true
-            },
-            beforeSend: function() {
-                $productList.html(`
-                    <li class="text-center py-4 text-muted">
-                        <i class="fa fa-spinner fa-spin"></i> Loading products...
-                    </li>
-                `);
-            },
-            success: function(response) {
-                $productList.html(response.html);
-            },
-            error: function() {
-                $productList.html('<li class="text-center py-4 text-danger">⚠️ Error loading data</li>');
-            }
-        });
-    }
+    $(document).on('click', '.btn-delete', function () {
+        const id = $(this).data('id');
+        const $row = $(this).closest('li');
 
-    $searchInput.on('keyup', function() {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(loadProducts, delay);
-    });
-
-    $searchForm.on('submit', function(e) {
-        e.preventDefault();
-        loadProducts();
-    });
-
-    $statusFilter.on('change', loadProducts);
-    $perPageSelect.on('change', loadProducts);
-
-    $(document).on('submit', '.delete-form', function(e) {
-        e.preventDefault();
-        const form = this;
         Swal.fire({
-            title: 'Yakin ingin menghapus?',
+            title: 'Yakin ingin menghapus produk ini?',
             text: 'Produk ini akan dihapus permanen.',
             icon: 'warning',
             showCancelButton: true,
@@ -229,58 +230,81 @@ $(document).ready(function () {
             confirmButtonColor: '#d33',
             cancelButtonColor: '#6c757d'
         }).then((result) => {
-            if (result.isConfirmed) form.submit();
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/products/${id}`,
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}', _method: 'DELETE' },
+                    beforeSend: () => Swal.fire({ title: 'Menghapus...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }),
+                    success: (res) => {
+                        Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message ?? 'Produk berhasil dihapus!', timer: 1500, showConfirmButton: false });
+                        $row.fadeOut(300, () => $(this).remove());
+                    },
+                    error: (xhr) => {
+                        Swal.fire({ icon: 'error', title: 'Gagal', text: xhr.responseJSON?.message ?? 'Terjadi kesalahan saat menghapus.' });
+                    }
+                });
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-nonaktifkan', function () {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'Nonaktifkan produk ini?',
+            text: 'Produk akan disembunyikan dari kasir.',
+            icon: 'info',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, nonaktifkan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#2563eb'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/products/${id}/deactivate`,
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}' },
+                    beforeSend: () => Swal.fire({ title: 'Menonaktifkan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }),
+                    success: (res) => {
+                        Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message ?? 'Produk dinonaktifkan.', timer: 1500, showConfirmButton: false });
+                        setTimeout(() => location.reload(), 1000);
+                    },
+                    error: () => {
+                        Swal.fire({ icon: 'error', title: 'Gagal', text: 'Tidak bisa menonaktifkan produk ini.' });
+                    }
+                });
+            }
+        });
+    });
+
+    $(document).on('click', '.btn-activate', function () {
+        const id = $(this).data('id');
+        Swal.fire({
+            title: 'Aktifkan kembali produk ini?',
+            text: 'Produk akan muncul lagi di kasir.',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, aktifkan',
+            cancelButtonText: 'Batal',
+            confirmButtonColor: '#16a34a'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `/products/${id}/activate`,
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}' },
+                    beforeSend: () => Swal.fire({ title: 'Mengaktifkan...', allowOutsideClick: false, didOpen: () => Swal.showLoading() }),
+                    success: (res) => {
+                        Swal.fire({ icon: 'success', title: 'Berhasil', text: res.message ?? 'Produk berhasil diaktifkan!', timer: 1500, showConfirmButton: false });
+                        setTimeout(() => location.reload(), 1000);
+                    },
+                    error: (xhr) => {
+                        Swal.fire({ icon: 'error', title: 'Gagal', text: xhr.responseJSON?.message ?? 'Terjadi kesalahan saat mengaktifkan produk.' });
+                    }
+                });
+            }
         });
     });
 });
 </script>
 @endpush
-
-@push('styles')
-<style>
-.filter-group {
-    background: #f9fafb;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    padding: 6px 10px;
-    display: flex;
-    align-items: center;
-    transition: all 0.2s ease;
-}
-.filter-group:hover {
-    background: #f3f4f6;
-}
-.filter-group .label {
-    font-size: 13px;
-    color: #6b7280;
-    font-weight: 500;
-}
-.select-wrapper {
-    position: relative;
-}
-.filter-select {
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    padding: 5px 8px;
-    background: #fff;
-    color: #111827;
-    font-size: 13px;
-    font-weight: 500;
-    outline: none;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-.filter-select:focus {
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
-}
-
-@media (max-width: 768px) {
-    .filter-group {
-        width: 100%;
-        justify-content: space-between;
-    }
-}
-</style>
-@endpush
-

@@ -18,7 +18,6 @@ class DashboardController extends Controller
             ? Store::where('user_id', $user->id)->get()
             : collect();
 
-        // Ambil data 7 hari terakhir
         $sales = Sales::query()
             ->when($storeId, fn($q) => $q->where('store_id', $storeId))
             ->whereBetween('created_at', [now()->subDays(6), now()])
@@ -30,7 +29,6 @@ class DashboardController extends Controller
         $labels = $sales->pluck('created_at')->map(fn($d) => $d->format('d M'));
         $data   = $sales->pluck('total');
 
-        // Hitung summary
         $total   = $sales->sum('total');
         $count   = $sales->count();
         $average = $count ? round($total / $count, 2) : 0;
@@ -42,49 +40,47 @@ class DashboardController extends Controller
 
 
     public function getData(Request $request)
-{
-    $storeId = session('store_id');
-    $range   = $request->input('range', '7d');
+    {
+        $storeId = session('store_id');
+        $range   = $request->input('range', '7d');
 
-    $query = Sales::query()
-        ->when($storeId, fn($q) => $q->where('store_id', $storeId));
+        $query = Sales::query()
+            ->when($storeId, fn($q) => $q->where('store_id', $storeId));
 
-    // === Filter waktu ===
-    if ($range === '7d') {
-        $query->whereBetween('created_at', [now()->subDays(6), now()]);
-    } elseif ($range === '30d') {
-        $query->whereBetween('created_at', [now()->subDays(29), now()]);
-    } elseif ($range === 'month') {
-        $query->whereMonth('created_at', now()->month);
-    }
+        if ($range === '7d') {
+            $query->whereBetween('created_at', [now()->subDays(6), now()]);
+        } elseif ($range === '30d') {
+            $query->whereBetween('created_at', [now()->subDays(29), now()]);
+        } elseif ($range === 'month') {
+            $query->whereMonth('created_at', now()->month);
+        }
 
-    $sales = $query->orderBy('created_at')->get(['created_at', 'total']);
+        $sales = $query->orderBy('created_at')->get(['created_at', 'total']);
 
-    if ($sales->isEmpty()) {
+        if ($sales->isEmpty()) {
+            return response()->json([
+                'empty' => true,
+                'labels' => [],
+                'data' => [],
+                'total' => 0,
+                'count' => 0,
+                'average' => 0,
+            ]);
+        }
+
+        $labels  = $sales->pluck('created_at')->map(fn($d) => $d->format('d M'));
+        $data    = $sales->pluck('total');
+        $total   = $sales->sum('total');
+        $count   = $sales->count();
+        $average = $count ? round($total / $count, 2) : 0;
+
         return response()->json([
-            'empty' => true,
-            'labels' => [],
-            'data' => [],
-            'total' => 0,
-            'count' => 0,
-            'average' => 0,
+            'empty' => false,
+            'labels' => $labels,
+            'data' => $data,
+            'total' => $total,
+            'count' => $count,
+            'average' => $average,
         ]);
     }
-
-    $labels  = $sales->pluck('created_at')->map(fn($d) => $d->format('d M'));
-    $data    = $sales->pluck('total');
-    $total   = $sales->sum('total');
-    $count   = $sales->count();
-    $average = $count ? round($total / $count, 2) : 0;
-
-    return response()->json([
-        'empty' => false,
-        'labels' => $labels,
-        'data' => $data,
-        'total' => $total,
-        'count' => $count,
-        'average' => $average,
-    ]);
-}
-
 }

@@ -148,10 +148,6 @@ $(document).ready(function() {
                     response.sales.forEach(item => {
                         html += `
                         <li class="product-item gap14">
-                            <div class="image no-bg">
-                                <img src="{{ asset('assets/img/receipt-icon.png') }}" alt="Nota"
-                                    style="width:45px;height:45px;object-fit:contain;">
-                            </div>
                             <div class="flex items-center justify-between gap20 flex-grow">
                                 <div class="body-text">${item.no}</div>
                                 <div class="body-title-2">#${item.invoice_number}</div>

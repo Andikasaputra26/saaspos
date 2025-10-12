@@ -49,18 +49,6 @@
                                 </select>
                             </div>
                         </fieldset>
-
-                        <fieldset class="brand">
-                            <div class="body-title mb-10">Brand <span class="tf-color-1">*</span></div>
-                            <div class="select">
-                                <select name="brand" required>
-                                    <option value="">Pilih brand</option>
-                                    <option value="Tsel" {{ old('brand')=='Tsel'?'selected':'' }}>Tsel</option>
-                                    <option value="Byu" {{ old('brand')=='Byu'?'selected':'' }}>Byu</option>
-                                    <option value="Orbit" {{ old('brand')=='Orbit'?'selected':'' }}>Orbit</option>
-                                </select>
-                            </div>
-                        </fieldset>
                     </div>
 
                     <div class="gap22 cols">

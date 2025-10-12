@@ -24,12 +24,8 @@ class StoreProduct extends Model
         return $this->belongsTo(Store::class);
     }
 
-    /**
-     * Relasi ke master produk global
-     */
     public function product()
     {
-        // Gunakan singular 'Product' jika model kamu bernama Product.php
         return $this->belongsTo(Products::class, 'product_id');
     }
 
