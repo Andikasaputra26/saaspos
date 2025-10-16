@@ -115,6 +115,7 @@ async function loadDashboardData(range = '7d') {
     try {
         const res = await fetch(`{{ route('dashboard.data') }}?range=${range}`);
         const data = await res.json();
+        console.log('Dashboard data:', data); // 🔍 Tambahkan ini untuk debug
 
         if (data.empty) {
             chart.updateSeries([{ name: 'Total Penjualan', data: [] }]);
@@ -124,18 +125,16 @@ async function loadDashboardData(range = '7d') {
             return;
         }
 
-        chart.updateOptions({
-            xaxis: { categories: data.labels },
-        });
+        chart.updateOptions({ xaxis: { categories: data.labels } });
         chart.updateSeries([{ name: 'Total Penjualan', data: data.data }]);
 
         document.querySelector("#totalSales").innerText = "Rp " + data.total.toLocaleString('id-ID');
         document.querySelector("#countSales").innerText = data.count;
         document.querySelector("#averageSales").innerText = "Rp " + data.average.toLocaleString('id-ID');
-
     } catch (error) {
         console.error("Gagal memuat data:", error);
     }
 }
+
 </script>
 @endpush
