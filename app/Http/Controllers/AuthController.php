@@ -7,29 +7,23 @@ use App\Models\Store;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
-    /**
-     * Tampilkan halaman login.
-     */
+  
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    /**
-     * Tampilkan halaman registrasi.
-     */
     public function showRegisterForm()
     {
         return view('auth.register');
     }
 
-    /**
-     * Proses registrasi user baru.
-     * Saat user mendaftar → otomatis jadi 'owner' dan dibuatkan 1 toko.
-     */
+  
     public function register(Request $request)
     {
         $request->validate([
@@ -61,9 +55,7 @@ class AuthController extends Controller
             ->with('success', 'Akun dan toko berhasil dibuat!');
     }
 
-    /**
-     * Proses login user.
-     */
+ 
     public function login(Request $request)
     {
         $request->validate([
@@ -91,9 +83,7 @@ class AuthController extends Controller
         return back()->withErrors(['email' => 'Email atau password salah.']);
     }
 
-    /**
-     * Logout user dari sistem.
-     */
+  
     public function logout(Request $request)
     {
         Auth::logout();
@@ -104,5 +94,48 @@ class AuthController extends Controller
         return redirect()
             ->route('login')
             ->with('success', 'Berhasil logout.');
+    }
+
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+
+            $user = User::where('google_id', $googleUser->getId())
+                        ->orWhere('email', $googleUser->getEmail())
+                        ->first();
+
+            if (!$user) {
+                $user = User::create([
+                    'name'       => $googleUser->getName(),
+                    'email'      => $googleUser->getEmail(),
+                    'google_id'  => $googleUser->getId(),
+                    'password'   => bcrypt(Str::random(16)),
+                    'role'       => 'owner',
+                ]);
+
+                $store = Store::create([
+                    'user_id' => $user->id,
+                    'name'    => 'Toko ' . $googleUser->getName(),
+                ]);
+
+                session(['store_id' => $store->id]);
+            }
+
+            if (!$user->google_id) {
+                $user->update(['google_id' => $googleUser->getId()]);
+            }
+
+            Auth::login($user);
+            return redirect()->route('dashboard')->with('success', 'Berhasil login dengan akun Google!');
+
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with('error', 'Gagal login dengan Google.');
+        }
     }
 }

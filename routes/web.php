@@ -9,7 +9,6 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SalesController;
 use App\Http\Controllers\StoreController;
 
-
 Route::controller(AuthController::class)->group(function () {
     Route::get('/login',    'showLoginForm')->name('login');
     Route::post('/login',   'login')->name('login.post');
@@ -18,6 +17,9 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/register','register')->name('register.post');
 
     Route::post('/logout',  'logout')->name('logout');
+
+    Route::get('/auth/google', 'redirectToGoogle')->name('google.login');
+    Route::get('/auth/google/callback', 'handleGoogleCallback');
 });
 
 Route::get('/', fn() => view('welcome'))->name('welcome');
@@ -36,15 +38,12 @@ Route::middleware(['auth'])->group(function () {
 
     Route::middleware(['tenant'])->group(function () {
 
-        Route::get('/dashboard',       [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard/data', [DashboardController::class, 'getSalesData'])->name('dashboard.data');
-
 
         Route::resource('products', ProductController::class);
         Route::post('/products/{id}/activate', [ProductController::class, 'activate'])->name('products.activate');
-        Route::post('/products/{id}/deactivate', [ProductController::class, 'deactivate'])
-                ->name('products.deactivate');
-
+        Route::post('/products/{id}/deactivate', [ProductController::class, 'deactivate'])->name('products.deactivate');
 
         Route::prefix('sales')->name('sales.')->group(function () {
             Route::get('/', [SalesController::class, 'index'])->name('index');
@@ -54,16 +53,14 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('/{id}', [SalesController::class, 'destroy'])->name('destroy');
         });
 
-
         Route::prefix('purchases')->name('purchases.')->group(function () {
             Route::get('/', [PurchaseController::class, 'index'])->name('index');
             Route::get('/{id}', [PurchaseController::class, 'show'])->name('show');
             Route::get('/api/list', [PurchaseController::class, 'getPurchases'])->name('get');
         });
 
-
         Route::prefix('report')->name('report.')->group(function () {
-            Route::get('/',              [ReportController::class, 'index'])->name('index');
+            Route::get('/', [ReportController::class, 'index'])->name('index');
             Route::get('/stock_movement', [ReportController::class, 'stockMovement'])->name('stock_movement');
         });
     });

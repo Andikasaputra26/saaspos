@@ -215,6 +215,10 @@
           <label class="form-check-label small" for="remember">Ingat saya</label>
         </div>
 
+        <a href="{{ route('google.login') }}" class="btn btn-outline-danger w-100 rounded-pill py-2 mb-3">
+          <i class="bi bi-google me-1"></i> Login dengan Google
+        </a>
+
         <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 mb-3">
           <i class="bi bi-box-arrow-in-right me-1"></i> Login
         </button>

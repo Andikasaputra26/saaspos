@@ -13,7 +13,9 @@ class TenantMiddleware
             $storeId = session('store_id') ?? Auth::user()->store_id ?? null;
 
             if (!$storeId) {
-                return redirect()->route('stores.select')->with('error', 'Pilih toko terlebih dahulu');
+                return redirect()
+                    ->route('stores.index')
+                    ->with('error', 'Pilih toko terlebih dahulu.');
             }
 
             $request->merge(['store_id' => $storeId]);
